@@ -4,11 +4,48 @@
 //fiz isso pra garantir ser genérico, mas estou assumindo no código que seja inteiros
 typedef int tipo;
 
+
+int compara(const void *e1, const void *e2);
+void processarBlocos(FILE *file, long totalBytes, int k);
+void gerenciaIntercala(int k);
+void intercala(char *a1, char *b1, char *saida1);
+
+int main(int argc, char** argv){
+    if(argc < 2){
+        fprintf(stderr, "Erro, não tem parametros");
+        return 1;
+    }
+
+    FILE *file = fopen(argv[1], "rb");
+    if(!file){
+        fprintf(stderr, "Erro ao abrir arquivo");
+        return 1;
+    }
+
+    fseek(file, 0, SEEK_END);
+
+    long tamanho = ftell(file);
+    rewind(file);
+    int k;
+    printf("Por quantos blocos deseja dividir(preferencialmente coloque uma potencia de 2)\n");
+    scanf("%d", &k);
+    processarBlocos(file, tamanho, k);
+    fclose(file);
+
+    gerenciaIntercala(k);
+
+    return 0;
+}
+
  int compara(const void *e1, const void *e2){
-    return (*(int*)e1) - (*(int*)e2);
+    if (*(tipo*)e1 < *(tipo*)e2) 
+        return -1;
+    if (*(tipo*)e1 > *(tipo*)e2) 
+        return 1;
+    return 0;
  }
 
-void processarBlocos(FILE *file, long totalBytes, int k){
+ void processarBlocos(FILE *file, long totalBytes, int k){
     long totalElementos = totalBytes/sizeof(tipo);
     long elementosBloco = totalElementos/k;
 
@@ -74,59 +111,32 @@ void intercala(char *a1, char *b1, char *saida1){
     tipo ta, tb;
 
     //não coloquei ainda o fopen pq não sei como fazer para ler
-    fread(&ta, sizeof(tipo), 1, a);
-    fread(&tb, sizeof(tipo), 1, b);
+    int leuA = fread(&ta, sizeof(tipo), 1, a);
+    int leuB = fread(&tb, sizeof(tipo), 1, b);
 
-    while(!feof(a) && !feof(b)){
-        if(compara(feof(a), feof(b)) < 0){
+    while(leuA && leuB){
+        if(compara(&ta, &tb) < 0){
             fwrite(&ta, sizeof(tipo), 1, saida);
-            fread(&ta, sizeof(tipo), 1, a);
+            leuA = fread(&ta, sizeof(tipo), 1, a);
         }
         else{
             fwrite(&tb, sizeof(tipo), 1, saida);
-            fread(&tb, sizeof(tipo), 1, b);
+            leuB = fread(&tb, sizeof(tipo), 1, b);
         }
     }
     
-    while(!feof(a)){
+    while(leuA){
         fwrite(&ta, sizeof(tipo), 1, saida);
-        fread(&ta, sizeof(tipo), 1, a); 
+        leuA = fread(&ta, sizeof(tipo), 1, a); 
     }
 
-    while(!feof(b)){
+    while(leuB){
         fwrite(&tb, sizeof(tipo), 1, saida);
-        fread(&tb, sizeof(tipo), 1, b);
+        leuB = fread(&tb, sizeof(tipo), 1, b);
     }
 
     fclose(a);
     fclose(b);
     fclose(saida);
 
-}
-
-int main(int argc, char** argv){
-    if(argc < 2){
-        fprintf(stderr, "Erro, não tem parametros");
-        return 1;
-    }
-
-    FILE *file = fopen(argv[1], "rb");
-    if(!file){
-        fprintf(stderr, "Erro ao abrir arquivo");
-        return 1;
-    }
-
-    fseek(file, 0, SEEK_END);
-
-    long tamanho = ftell(file);
-    rewind(file);
-    int k;
-    printf("Por quantos blocos deseja dividir(preferencialmente coloque uma potencia de 2)\n");
-    scanf("%d", &k);
-    processarBlocos(file, tamanho, k);
-    fclose(file);
-
-    gerenciaIntercala(k);
-
-    return 0;
 }
