@@ -22,7 +22,7 @@ void processarBlocos(FILE *file, long totalBytes, int k){
         if(i == k-1)
             lidos = totalElementos - (i*elementosBloco);
         else
-            lidos = totalElementos;
+            lidos = elementosBloco;
         
         fread(buffer, sizeof(tipo), lidos, file);
         qsort(buffer, lidos, sizeof(tipo), compara);
@@ -37,7 +37,40 @@ void processarBlocos(FILE *file, long totalBytes, int k){
     free(buffer);
 }
 
-void intercala(FILE *a, FILE *b, FILE *saida){
+void gerenciaIntercala(int k){
+    char nomes[200][100];
+    int totalArquivos = k;
+    int atual = 0;
+
+    for(int i = 0; i < k; i++)
+        sprintf(nomes[i], "bloco%d.dat", i);
+    
+    while(totalArquivos - atual > 1){
+        char *arq1 = nomes[atual++];
+        char *arq2 = nomes[atual++];
+        
+        char nomeSaida[100];
+
+        sprintf(nomeSaida, "temporario%d.dat", totalArquivos);
+        strcpy(nomes[totalArquivos], nomeSaida);
+
+        intercala(arq1, arq2, nomeSaida);
+
+        remove(arq1);
+        remove(arq2);
+
+        totalArquivos++;
+    }
+
+    printf("Arquivo final ordenado: %s\n", nomes[totalArquivos - 1]);
+
+}
+
+void intercala(char *a1, char *b1, char *saida1){
+    
+    FILE *a = fopen(a1, "rb");
+    FILE *b = fopen(b1, "rb");
+    FILE *saida = fopen(saida1, "wb");
     tipo ta, tb;
 
     //não coloquei ainda o fopen pq não sei como fazer para ler
@@ -91,16 +124,9 @@ int main(int argc, char** argv){
     printf("Por quantos blocos deseja dividir(preferencialmente coloque uma potencia de 2)\n");
     scanf("%d", &k);
     processarBlocos(file, tamanho, k);
-
-    for(int i = 0; i < k; i++){
-        FILE *aux1 = fopen("bloco%d.dat", "rb+");
-        FILE *aux2 = fopen("bloco%d+1.dat", "rb+");
-        FILE *final;
-        intercala(aux1, aux2, final);
-    }
-
     fclose(file);
 
+    gerenciaIntercala(k);
 
     return 0;
 }
